@@ -1,4 +1,4 @@
-name: Auto-update README
+name: Auto-update README with PR
 
 on:
   schedule:
@@ -19,7 +19,7 @@ jobs:
       with:
         fetch-depth: 0
 
-    # 2. Create new branch (from current main)
+    # 2. Create and switch to new branch
     - name: Create branch
       id: branch
       run: |
@@ -28,38 +28,48 @@ jobs:
         git checkout -b "$branch_name"
         echo "branch_name=$branch_name" >> $GITHUB_OUTPUT
 
-    # 3. Modify README.md (in the new branch)
+    # 3. Make changes (with explicit path)
     - name: Update README
       run: |
-        echo -e "\n<!-- Auto-updated -->\nLast run: $(date '+%Y-%m-%d %H:%M:%S %Z')\n" >> README.md
-        git status  # Verify changes appear
+        echo -e "\n<!-- Auto-updated -->\nLast run: $(date '+%Y-%m-%d %H:%M:%S %Z')\n" >> ./README.md
+        cat ./README.md  # Verify changes
+        git add ./README.md
+        git status  # Should show "Changes to be committed"
 
-    # 4. Commit changes
-    - name: Commit
+    # 4. Commit with verification
+    - name: Commit changes
       run: |
-        git config --global user.name "GitHub Actions Bot"
-        git config --global user.email "actions-bot@github.com"
-        git add README.md
+        git config --global user.name "GitHub Actions"
+        git config --global user.email "actions@github.com"
         git commit -m "Automated README update [skip ci]"
-        git log -1  # Show latest commit
+        git log -1  # Show the commit
 
-    # 5. Push the new branch
-    - name: Push
-      run: git push origin HEAD
+    # 5. Force push (ensures branch update)
+    - name: Push branch
+      run: git push origin HEAD --force-with-lease
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    # 6. Create PR (critical part you were missing)
+    # 6. Create PR (without auto-delete)
     - name: Create Pull Request
+      id: create-pr
       uses: peter-evans/create-pull-request@v5
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         branch: ${{ steps.branch.outputs.branch_name }}
         base: main
-        title: "docs: Auto-update README ($(date '+%m-%d'))"
+        title: "docs: Update README ($(date '+%m-%d'))"
         body: |
-          Automated update:
-          - Added timestamp to README.md
-          - Generated at $(date)
+          ### Automated Update
+          - Timestamp: $(date)
+          - Branch: ${{ steps.branch.outputs.branch_name }}
+          - Approvers required
         labels: automated
-        delete-branch: true  # Auto-deletes branch after merge
+        draft: false  # Change to 'true' if you want draft PRs
+
+    # 7. Output PR/branch info
+    - name: Show results
+      run: |
+        echo "New branch: ${{ steps.branch.outputs.branch_name }}"
+        echo "PR Number: ${{ steps.create-pr.outputs.pull-request-number }}"
+        echo "PR URL: https://github.com/$GITHUB_REPOSITORY/pull/${{ steps.create-pr.outputs.pull-request-number }}"
