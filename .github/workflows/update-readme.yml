@@ -79,29 +79,6 @@ jobs:
           --head "$BRANCH_NAME" \
           --base "main"
 
-
-    # # 6. Create PR (Final Working Version)
-    # - name: Create PR
-    #   id: create-pr
-    #   uses: peter-evans/create-pull-request@v5
-    #   with:
-    #     token: ${{ secrets.GITHUB_TOKEN }}
-    #     # Use existing branch directly (critical fix)
-    #     branch: ${{ steps.branch.outputs.branch_name }}
-    #     # Target branch
-    #     base: main
-    #     # Preserve our existing commit
-    #     add-paths: README.md
-    #     commit-message: "Update README - $(date -u)"
-    #     title: "Update README - $(date +%m-%d)"
-    #     body: |
-    #       ### Automated Update
-    #       - Source Branch: ${{ steps.branch.outputs.branch_name }}
-    #       - Timestamp: $(date -u)
-    #     labels: automated
-    #     # Prevent intermediate branch creation
-    #     branch-suffix: none
-
     # 7. Final verification
     - name: Verify PR
       env:
