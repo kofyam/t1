@@ -17,6 +17,8 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Important for push action to work
       
     - name: Create new branch
       id: branch
@@ -38,10 +40,10 @@ jobs:
         git commit -m "Update README with timestamp"
         
     - name: Push changes
-      uses: ad-m/github-push-action@master
-      with:
-        branch: ${{ steps.branch.outputs.branch_name }}
-        github_token: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        git push origin ${{ steps.branch.outputs.branch_name }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         
     - name: Create Pull Request
       uses: peter-evans/create-pull-request@v5
