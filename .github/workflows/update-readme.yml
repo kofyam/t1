@@ -1,8 +1,8 @@
-name: Update README with timestamp
+name: Auto-update README
 
 on:
-  # schedule:
-  #   - cron: '0 * * * *'  # Hourly
+  schedule:
+    - cron: '0 * * * *'  # Runs hourly
   workflow_dispatch:
 
 permissions:
@@ -12,46 +12,54 @@ permissions:
 jobs:
   update-readme:
     runs-on: ubuntu-latest
-    
+
     steps:
-    - name: Checkout main branch
-      uses: actions/checkout@v4
+    # 1. Checkout main branch
+    - uses: actions/checkout@v4
       with:
         fetch-depth: 0
-        ref: main  # Explicitly checkout main
 
-    - name: Create fresh branch
+    # 2. Create new branch (from current main)
+    - name: Create branch
       id: branch
       run: |
-        timestamp=$(date +%Y%m%d%H%M%S)
-        branch_name="readme-update-$timestamp"
-        git checkout -b $branch_name
+        timestamp=$(date +%Y%m%d-%H%M%S)
+        branch_name="update-readme-$timestamp"
+        git checkout -b "$branch_name"
         echo "branch_name=$branch_name" >> $GITHUB_OUTPUT
 
-    - name: Update README in new branch
+    # 3. Modify README.md (in the new branch)
+    - name: Update README
       run: |
-        # Add timestamp with clear separator
-        echo -e "\n## Auto-Update Log\nLast run: $(date '+%Y-%m-%d %H:%M:%S %Z')\n" >> README.md
-        cat README.md  # Verify changes
+        echo -e "\n<!-- Auto-updated -->\nLast run: $(date '+%Y-%m-%d %H:%M:%S %Z')\n" >> README.md
+        git status  # Verify changes appear
 
-    - name: Commit changes
+    # 4. Commit changes
+    - name: Commit
       run: |
-        git config --global user.name "GitHub Actions"
-        git config --global user.email "actions@github.com"
+        git config --global user.name "GitHub Actions Bot"
+        git config --global user.email "actions-bot@github.com"
         git add README.md
-        git commit -m "[Automated] Update README timestamp"
+        git commit -m "Automated README update [skip ci]"
+        git log -1  # Show latest commit
 
-    - name: Push changes
-      run: git push origin ${{ steps.branch.outputs.branch_name }}
+    # 5. Push the new branch
+    - name: Push
+      run: git push origin HEAD
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Create PR
+    # 6. Create PR (critical part you were missing)
+    - name: Create Pull Request
       uses: peter-evans/create-pull-request@v5
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         branch: ${{ steps.branch.outputs.branch_name }}
         base: main
-        title: "docs: Automated README update ($(date '+%m-%d'))"
-        body: "Auto-generated PR updating README timestamp"
+        title: "docs: Auto-update README ($(date '+%m-%d'))"
+        body: |
+          Automated update:
+          - Added timestamp to README.md
+          - Generated at $(date)
         labels: automated
+        delete-branch: true  # Auto-deletes branch after merge
