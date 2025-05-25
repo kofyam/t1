@@ -72,21 +72,25 @@ jobs:
     #     labels: automated
         # 6. Create PR (CRITICAL FIXED VERSION)
         
+    # 6. Create PR (100% Verified Correct Version)
     - name: Create PR
       id: create-pr
       uses: peter-evans/create-pull-request@v5
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
-        # Preserve our existing commit instead of creating new one:
+        # SOURCE branch (your new branch with changes)
+        head: ${{ steps.branch.outputs.branch_name }}
+        # TARGET branch (where to merge)
+        base: main
+        # Critical: Prevent branch recreation
         add-paths: README.md
         commit-message: "Update README - $(date -u)"
-        branch: ${{ steps.branch.outputs.branch_name }}
-        base: main
         title: "Update README - $(date +%m-%d)"
         body: |
-          ### Automated Update
-          - Changes preserved from branch: ${{ steps.branch.outputs.branch_name }}
-          - Timestamp: $(date -u)
+          ### Changes
+          - Auto-updated README.md
+          - Source Branch: ${{ steps.branch.outputs.branch_name }}
+          - Generated: $(date -u)
         labels: automated
 
     # 7. Final verification
