@@ -1,4 +1,4 @@
-name: Guaranteed README Update with PR
+name: Guaranteed README Update
 
 on:
   workflow_dispatch:
@@ -59,31 +59,24 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    # 6. Create PR (CRITICAL FIXED VERSION)
-    - name: Create PR
-      id: create-pr
-      uses: peter-evans/create-pull-request@v5
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}
-        # Preserve our existing commit instead of creating new one:
-        add-paths: README.md
-        commit-message: "Update README - $(date -u)"
-        branch: ${{ steps.branch.outputs.branch_name }}
-        base: main
-        title: "Update README - $(date +%m-%d)"
-        body: |
-          ### Automated Update
-          - Changes preserved from branch: ${{ steps.branch.outputs.branch_name }}
-          - Timestamp: $(date -u)
-        labels: automated
+    # # 6. Create PR (with existence check)
+    # - name: Create PR
+    #   id: create-pr
+    #   uses: peter-evans/create-pull-request@v5
+    #   with:
+    #     token: ${{ secrets.GITHUB_TOKEN }}
+    #     branch: ${{ steps.branch.outputs.branch_name }}
+    #     base: main
+    #     title: "Update README - $(date +%m-%d)"
+    #     body: "Automated update"
+    #     labels: automated
 
-    # 7. Final verification
-    - name: Verify results
-      run: |
-        echo "Branch: ${{ steps.branch.outputs.branch_name }}"
-        echo "PR Number: ${{ steps.create-pr.outputs.pull-request-number || 'NOT_CREATED' }}"
-        echo "PR URL: https://github.com/$GITHUB_REPOSITORY/pull/${{ steps.create-pr.outputs.pull-request-number }}"
-        if [ -z "${{ steps.create-pr.outputs.pull-request-number }}" ]; then
-          echo "::error::PR creation failed"
-          exit 1
-        fi
+    # # 7. Final verification
+    # - name: Verify results
+    #   run: |
+    #     echo "Branch: ${{ steps.branch.outputs.branch_name }}"
+    #     echo "PR Number: ${{ steps.create-pr.outputs.pull-request-number || 'NOT_CREATED' }}"
+    #     if [ -z "${{ steps.create-pr.outputs.pull-request-number }}" ]; then
+    #       echo "::warning::PR creation failed"
+    #       exit 1
+    #     fi
