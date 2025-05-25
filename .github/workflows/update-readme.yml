@@ -2,8 +2,7 @@ name: Update README with timestamp
 
 on:
   # schedule:
-  #   # Runs at the top of every hour
-  #   - cron: '0 * * * *'
+  #   - cron: '0 * * * *'  # Hourly
   workflow_dispatch:
 
 permissions:
@@ -15,42 +14,44 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-    - name: Checkout repository
+    - name: Checkout main branch
       uses: actions/checkout@v4
       with:
-        fetch-depth: 0  # Important for push action to work
-      
-    - name: Create new branch
+        fetch-depth: 0
+        ref: main  # Explicitly checkout main
+
+    - name: Create fresh branch
       id: branch
       run: |
         timestamp=$(date +%Y%m%d%H%M%S)
-        branch_name="update-readme-$timestamp"
+        branch_name="readme-update-$timestamp"
         git checkout -b $branch_name
         echo "branch_name=$branch_name" >> $GITHUB_OUTPUT
-        
-    - name: Update README
+
+    - name: Update README in new branch
       run: |
-        echo -e "\n\nLast updated: $(date)" >> README.md
-        
+        # Add timestamp with clear separator
+        echo -e "\n## Auto-Update Log\nLast run: $(date '+%Y-%m-%d %H:%M:%S %Z')\n" >> README.md
+        cat README.md  # Verify changes
+
     - name: Commit changes
       run: |
         git config --global user.name "GitHub Actions"
         git config --global user.email "actions@github.com"
         git add README.md
-        git commit -m "Update README with timestamp"
-        
+        git commit -m "[Automated] Update README timestamp"
+
     - name: Push changes
-      run: |
-        git push origin ${{ steps.branch.outputs.branch_name }}
+      run: git push origin ${{ steps.branch.outputs.branch_name }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        
-    - name: Create Pull Request
+
+    - name: Create PR
       uses: peter-evans/create-pull-request@v5
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         branch: ${{ steps.branch.outputs.branch_name }}
         base: main
-        title: "Update README with timestamp"
-        body: "Automatically generated PR to update README.md"
-        commit-message: "Update README with timestamp"
+        title: "docs: Automated README update ($(date '+%m-%d'))"
+        body: "Auto-generated PR updating README timestamp"
+        labels: automated
