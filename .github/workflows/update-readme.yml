@@ -77,8 +77,7 @@ jobs:
           --title "Update README - $(date +%m-%d)" \
           --body "### Automated Update\n- Source Branch: $BRANCH_NAME\n- Timestamp: $(date -u)" \
           --head "$BRANCH_NAME" \
-          --base "main" \
-          --label "automated"
+          --base "main"
 
     # # 6. Create PR (Final Working Version)
     # - name: Create PR
