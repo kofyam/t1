@@ -50,49 +50,50 @@ jobs:
         git show --stat
 
     # 5. Push with lease (force if needed)
-    - name: Push branch
-      run: |
-        echo "Pushing to origin..."
-        git push origin HEAD --force-with-lease
-        echo "Push complete. Verify at:"
-        echo "https://github.com/$GITHUB_REPOSITORY/tree/${{ steps.branch.outputs.branch_name }}"
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    # - name: Push branch
+    #   run: |
+    #     echo "Pushing to origin..."
+    #     git push origin HEAD --force-with-lease
+    #     echo "Push complete. Verify at:"
+    #     echo "https://github.com/$GITHUB_REPOSITORY/tree/${{ steps.branch.outputs.branch_name }}"
+    #   env:
+    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    # # 6. Create PR (with existence check)
-    # - name: Create PR
-    #   id: create-pr
-    #   uses: peter-evans/create-pull-request@v5
-    #   with:
-    #     token: ${{ secrets.GITHUB_TOKEN }}
-    #     branch: ${{ steps.branch.outputs.branch_name }}
-    #     base: main
-    #     title: "Update README - $(date +%m-%d)"
-    #     body: "Automated update"
-    #     labels: automated
-        # 6. Create PR (CRITICAL FIXED VERSION)
-        
-    # 6. Create PR (Final Working Version)
+    # 6. Create PR (fixed version)
     - name: Create PR
       id: create-pr
       uses: peter-evans/create-pull-request@v5
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
-        # Use existing branch directly (critical fix)
-        branch: ${{ steps.branch.outputs.branch_name }}
-        # Target branch
-        base: main
-        # Preserve our existing commit
-        add-paths: README.md
         commit-message: "Update README - $(date -u)"
         title: "Update README - $(date +%m-%d)"
         body: |
           ### Automated Update
-          - Source Branch: ${{ steps.branch.outputs.branch_name }}
           - Timestamp: $(date -u)
+        branch: readme-update  # static or use dynamic timestamp if needed
+        base: main
         labels: automated
-        # Prevent intermediate branch creation
-        branch-suffix: none
+    # # 6. Create PR (Final Working Version)
+    # - name: Create PR
+    #   id: create-pr
+    #   uses: peter-evans/create-pull-request@v5
+    #   with:
+    #     token: ${{ secrets.GITHUB_TOKEN }}
+    #     # Use existing branch directly (critical fix)
+    #     branch: ${{ steps.branch.outputs.branch_name }}
+    #     # Target branch
+    #     base: main
+    #     # Preserve our existing commit
+    #     add-paths: README.md
+    #     commit-message: "Update README - $(date -u)"
+    #     title: "Update README - $(date +%m-%d)"
+    #     body: |
+    #       ### Automated Update
+    #       - Source Branch: ${{ steps.branch.outputs.branch_name }}
+    #       - Timestamp: $(date -u)
+    #     labels: automated
+    #     # Prevent intermediate branch creation
+    #     branch-suffix: none
 
     # 7. Final verification
     - name: Verify results
