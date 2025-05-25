@@ -103,11 +103,17 @@ jobs:
     #     branch-suffix: none
 
     # 7. Final verification
-    - name: Verify results
+    - name: Verify PR
+      env:
+        GH_TOKEN: ${{ secrets.GH_PAT }}
+        BRANCH_NAME: ${{ steps.branch.outputs.branch_name }}
       run: |
-        echo "Branch: ${{ steps.branch.outputs.branch_name }}"
-        echo "PR Number: ${{ steps.create-pr.outputs.pull-request-number || 'NOT_CREATED' }}"
-        if [ -z "${{ steps.create-pr.outputs.pull-request-number }}" ]; then
+        echo "Branch: $BRANCH_NAME"
+        PR_URL=$(gh pr view "$BRANCH_NAME" --json url,number -q '.url')
+        PR_NUMBER=$(gh pr view "$BRANCH_NAME" --json number -q '.number')
+        if [ -z "$PR_NUMBER" ]; then
           echo "::warning::PR creation failed"
           exit 1
         fi
+        echo "✅ PR Created: #$PR_NUMBER"
+        echo "🔗 $PR_URL"
