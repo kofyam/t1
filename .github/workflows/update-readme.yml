@@ -1,8 +1,6 @@
-name: Auto-update README with PR
+name: Guaranteed README Update
 
 on:
-  schedule:
-    - cron: '0 * * * *'  # Runs hourly
   workflow_dispatch:
 
 permissions:
@@ -14,51 +12,71 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    # 1. Checkout main branch
+    # 1. Checkout with full history
     - uses: actions/checkout@v4
       with:
         fetch-depth: 0
 
-    # 2. Create and switch to new branch
+    # 2. Create new branch (with debug output)
     - name: Create branch
       id: branch
       run: |
         timestamp=$(date +%Y%m%d-%H%M%S)
-        branch_name="update-readme-$timestamp"
+        branch_name="readme-update-$timestamp"
         git checkout -b "$branch_name"
+        echo "Created branch $branch_name"
         echo "branch_name=$branch_name" >> $GITHUB_OUTPUT
-        echo -e "\n<!-- Auto-updated -->\nLast run: $(date '+%Y-%m-%d %H:%M:%S %Z')\n" >> ./README.md
-        cat ./README.md  # Verify changes
-        git add .
-        git status  # Should show "Changes to be committed"
+        git branch -vv
+
+    # 3. Modify README (with absolute path)
+    - name: Update README
+      run: |
+        echo -e "\n<!-- Auto-update -->\nUpdated: $(date -u)" >> "$GITHUB_WORKSPACE/README.md"
+        echo "File content after update:"
+        cat "$GITHUB_WORKSPACE/README.md"
+        echo "Git status:"
+        git status -v
+
+    # 4. Commit changes (with verification)
+    - name: Commit
+      run: |
         git config --global user.name "GitHub Actions"
         git config --global user.email "actions@github.com"
-        git commit -m "Automated README update [skip ci]"
-        git log -1  # Show the commit
+        git add README.md
+        echo "Staged changes:"
+        git diff --cached
+        git commit -m "Update README - $(date -u)"
+        echo "Commit created:"
+        git show --stat
+
+    # 5. Push with lease (force if needed)
+    - name: Push branch
+      run: |
+        echo "Pushing to origin..."
         git push origin HEAD --force-with-lease
+        echo "Push complete. Verify at:"
+        echo "https://github.com/$GITHUB_REPOSITORY/tree/${{ steps.branch.outputs.branch_name }}"
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    # 6. Create PR (without auto-delete)
-    - name: Create Pull Request
+    # 6. Create PR (with existence check)
+    - name: Create PR
       id: create-pr
       uses: peter-evans/create-pull-request@v5
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         branch: ${{ steps.branch.outputs.branch_name }}
         base: main
-        title: "docs: Update README ($(date '+%m-%d'))"
-        body: |
-          ### Automated Update
-          - Timestamp: $(date)
-          - Branch: ${{ steps.branch.outputs.branch_name }}
-          - Approvers required
+        title: "Update README - $(date +%m-%d)"
+        body: "Automated update"
         labels: automated
-        draft: false  # Change to 'true' if you want draft PRs
 
-    # 7. Output PR/branch info
-    - name: Show results
+    # 7. Final verification
+    - name: Verify results
       run: |
-        echo "New branch: ${{ steps.branch.outputs.branch_name }}"
-        echo "PR Number: ${{ steps.create-pr.outputs.pull-request-number }}"
-        echo "PR URL: https://github.com/$GITHUB_REPOSITORY/pull/${{ steps.create-pr.outputs.pull-request-number }}"
+        echo "Branch: ${{ steps.branch.outputs.branch_name }}"
+        echo "PR Number: ${{ steps.create-pr.outputs.pull-request-number || 'NOT_CREATED' }}"
+        if [ -z "${{ steps.create-pr.outputs.pull-request-number }}" ]; then
+          echo "::warning::PR creation failed"
+          exit 1
+        fi
