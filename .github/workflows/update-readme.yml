@@ -27,10 +27,6 @@ jobs:
         branch_name="update-readme-$timestamp"
         git checkout -b "$branch_name"
         echo "branch_name=$branch_name" >> $GITHUB_OUTPUT
-
-    # 3. Make changes (with explicit path)
-    - name: Update README
-      run: |
         echo -e "\n<!-- Auto-updated -->\nLast run: $(date '+%Y-%m-%d %H:%M:%S %Z')\n" >> ./README.md
         cat ./README.md  # Verify changes
         git add .
