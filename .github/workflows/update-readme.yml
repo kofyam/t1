@@ -69,13 +69,10 @@ jobs:
     # 6. Create PR using GitHub CLI
     - name: Create PR
       env:
-        # GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         BRANCH_NAME: ${{ steps.branch.outputs.branch_name }}
       run: |
         echo "Creating PR from $BRANCH_NAME to main"
-        gh auth setup-git
-        gh auth login --with-token <<< "$GITHUB_TOKEN"
-
         gh pr create \
           --title "Update README - $(date +%m-%d)" \
           --body "### Automated Update\n- Source Branch: $BRANCH_NAME\n- Timestamp: $(date -u)" \
