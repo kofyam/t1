@@ -35,14 +35,11 @@ jobs:
         cat ./README.md  # Verify changes
         git add .
         git status  # Should show "Changes to be committed"
-        git config --global user.name "GitHub Actions"
-        git config --global user.email "actions@github.com"
+        # git config --global user.name "GitHub Actions"
+        # git config --global user.email "actions@github.com"
         git commit -m "Automated README update [skip ci]"
         git log -1  # Show the commit
-
-    # 5. Force push (ensures branch update)
-    - name: Push branch
-      run: git push origin HEAD --force-with-lease
+        git push origin HEAD --force-with-lease
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
