@@ -1,10 +1,14 @@
 name: Update README with timestamp
 
 on:
-  schedule:
-    # Runs at the top of every hour
-    - cron: '0 * * * *'
+  # schedule:
+  #   # Runs at the top of every hour
+  #   - cron: '0 * * * *'
   workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
 
 jobs:
   update-readme:
